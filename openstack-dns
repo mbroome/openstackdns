@@ -1,0 +1,61 @@
+#!/usr/bin/python
+import logging
+import sys
+import argparse
+
+import novacfg
+import novaqueue
+import novapdns
+import background
+
+# parse command line arguments
+def parseArgs():
+   parser = argparse.ArgumentParser(description='openstackdns')
+   parser.add_argument('-c', action="store", dest="configfile", required=True)
+   parser.add_argument('-d', action="store_true", dest="debug")
+
+   args = parser.parse_args()
+   return(args)
+
+def main(argv):
+   logLevel = logging.DEBUG # default to debug
+
+   # parse up the command line arguments
+   args = parseArgs()
+
+   # parse the config file
+   config = novacfg.novaConfig()
+
+   try:
+      if not args.debug:
+         background.createDaemon()
+         logLevel = logging.INFO # switch to info if not debugging
+   except:
+      pass
+
+   # first we setup the logger
+   logger = logging.getLogger('novadns')
+   hdlr = logging.FileHandler( config.get('LOG', 'logfile') )
+   formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
+   hdlr.setFormatter(formatter)
+   logger.addHandler(hdlr) 
+
+   logger.setLevel(logLevel)
+
+   logger.info("Starting openstack-dns")
+
+   # make a pdns object to deal with talking to the database
+   pdns = novapdns.pdnsDatabase(config)
+
+   # make a queue object to watch qpid for nova messages
+   queue = novaqueue.novaQueue(config)
+
+   # start watching the queue pushing entries into pdns
+   try:
+      queue.get(pdns)
+   except:
+      logger.exception("Something bad happened")
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
+

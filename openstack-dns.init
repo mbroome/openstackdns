@@ -1,0 +1,81 @@
+#!/bin/sh
+#
+# keystone  OpenStack dns management
+#
+# chkconfig:   - 20 80
+# description: openstack dns management
+### END INIT INFO
+
+. /etc/rc.d/init.d/functions
+
+prog=openstack-dns
+exec="/opt/openstackdns/openstack-dns"
+config="/opt/openstack/dns.conf"
+pidfile="/var/run/$prog/$prog.pid"
+
+[ -e /etc/sysconfig/$prog ] && . /etc/sysconfig/$prog
+
+lockfile=/var/lock/subsys/$prog
+
+start() {
+  echo -n $"Starting $prog: "
+  daemon --user nova $exec -c $config
+  RETVAL=$?
+  echo
+  [ $RETVAL -eq 0 ] && touch /var/lock/subsys/openstack-dns
+}
+
+stop() {
+  echo -n $"Stopping $prog: "
+  P=`/bin/ps awux|/bin/grep $exec|/bin/grep -v grep|/bin/awk '{print $2 }'`
+  if ! test -z "$P"; then
+     kill $P
+  fi
+  RETVAL=$?
+  echo
+  [ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/openstack-dns
+}
+
+restart() {
+    stop
+    start
+}
+
+reload() {
+    restart
+}
+
+force_reload() {
+    restart
+}
+
+checkstatus() {
+   R=`/bin/ps awux|/bin/grep $exec|/bin/grep -v grep`
+   if test -z "$R"; then
+      echo "$prog stopped"
+      RETVAL=3
+   else
+      echo "$prog running ($R)"
+      RETVAL=0
+   fi
+}
+
+
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    restart)
+        restart
+        ;;
+    status)
+        checkstatus
+        ;;
+    *)
+        echo $"Usage: $0 {start|stop|status|restart}"
+        exit 2
+esac
+exit $RETVAL
