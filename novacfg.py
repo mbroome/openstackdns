@@ -5,7 +5,7 @@ from configobj import ConfigObj
 
 class novaConfig:
    def __init__(self, configFile=''):
-      self.configFile = '/etc/config/openstack/dns.conf'
+      self.configFile = '/opt/openstack/dns.conf'
       try:
          if configFile:
             self.configFile = configFIle 

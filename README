@@ -1,1 +1,9 @@
-test
+OpenStackDNS is designed to integrate virtual machines managed by openstack into an existing Powerdns system.  As virtual machines are created and deleted within openstack, thier A and PTR records are updated in Powerdns via the gmysql database backend.
+
+On the openstack side, openstackdns monitors the QPID AMQP queue for messages related to creating and removing servers.  Openstackdns can run anywhere as long as it has access to the queue.  Additionally, multiple instances of openstackdns can be ran at the same time to provide high availability.
+
+On the powerdns side, the server needs to be configured to point to a mysql database via the gmysql backend (take a look at pdns.conf).  An example of the initial records required for the database are in the dns.sql file.
+
+Openstackdns is configured via the a config file (dns.conf).  The config defines the location of the QPID queue, the location and login for mysql that powerdns points to and the forward and reverse zone names associated with the virtual machines.  An example init script is openstack-dns.init.
+
+
